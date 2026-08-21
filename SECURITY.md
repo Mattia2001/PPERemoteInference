@@ -10,8 +10,9 @@ The remote inference service processes camera frames from workplace experiments.
 - Apply request size, rate and timeout limits.
 - Keep databases and monitoring backends off the externally reachable interface.
 - Never commit passwords, VPN material, tokens, certificates or private keys.
-- Retain frames only when enabled by the experiment configuration and documented consent procedure.
-- Record model version and request identifier without logging image payloads by default.
+- Do not persist frames, detections, confidences or bounding boxes on the inference server.
+- Record bounded aggregate service metrics; keep per-frame experiment records exclusively on the phone.
+- Record model version and request identifier without logging image payloads or inference results.
 
 ## Current server constraints
 

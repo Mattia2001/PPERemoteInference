@@ -1,16 +1,22 @@
-# API service
+# Stateless inference API
 
-Planned FastAPI service exposed to `PPEMobilePlatform` through the approved VPN path.
+This directory contains the first executable remote inference service. A single FastAPI process owns request validation and a loaded inference backend; this avoids an unnecessary internal network hop on the current single-GPU server.
 
-Responsibilities:
+Implemented endpoints:
 
-- health and readiness endpoints;
-- request authentication and validation;
-- frame size and media-type enforcement;
-- stable `frameId` propagation;
-- model selection from the deployed registry;
-- inference-service invocation;
-- canonical response and error serialization;
-- request and server-stage timing metrics.
+- `GET /health`, `GET /ready`, `GET /v1/ready`;
+- `GET /v1/capabilities`, `GET /v1/status`;
+- `POST /v1/inference`;
+- `GET /metrics` (aggregate Prometheus metrics only).
 
-The API must not store frame payloads or load model weights directly unless profiling demonstrates that a separate inference process is unnecessary.
+The default `mock` backend makes contract and deployment tests possible without model weights or a GPU. Set `PPE_BACKEND=ultralytics` and mount a `.pt` or `.engine` model for real inference.
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -r services/api/requirements-dev.txt
+uvicorn app.main:app --app-dir services/api --host 0.0.0.0 --port 8080
+pytest services/api/tests
+```
+
+No frame or detection persistence is implemented by design. See [the API contract](../../docs/api-contract.md) and [ADR 0004](../../docs/decisions/0004-mobile-owned-experiment-log.md).

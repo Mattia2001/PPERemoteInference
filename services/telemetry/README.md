@@ -1,15 +1,12 @@
-# Telemetry service
+# Telemetry service — deferred
 
-Planned ingestion boundary for experiment and runtime measurements.
+No telemetry-ingestion service is part of the baseline architecture.
 
-Telemetry must remain outside the latency-critical inference response path. Candidate records include:
+`PPEMobilePlatform` owns the ordered per-frame experiment log and exports the unified JSONL containing both local and remote results. The server must not persist:
 
-- request and frame identifiers;
-- selected model and processing segment;
-- encoded payload size;
-- queue, preprocessing, inference and postprocessing time;
-- end-to-end latency reported by the mobile client;
-- GPU utilization and memory;
-- network and experiment metadata.
+- frames or encoded payloads;
+- `frameId` or `sequenceNumber` event streams;
+- bounding boxes or confidences;
+- per-frame inference records.
 
-Raw image data must not be included in ordinary logs or metrics.
+The remote deployment exposes only aggregate operational metrics to Prometheus: request/error counts, latency histograms, in-flight work, queue depth, model identity and host/GPU/network health. A future event store requires a new architecture decision and an explicit retention/privacy policy.

@@ -1,11 +1,9 @@
 # Tests
 
-Planned test layers:
+The executable API contract tests currently live in `services/api/tests` and run against the stateless mock backend:
 
-- API schema and error-contract tests;
-- preprocessing and postprocessing unit tests;
-- golden-frame parity tests between exported model runtimes;
-- GPU container smoke tests;
-- Android-to-server integration tests;
-- load, latency and VRAM benchmarks;
-- degraded-network and out-of-order response tests.
+```bash
+pytest services/api/tests
+```
+
+They verify liveness/readiness, identity echo, image dimensions and stable failures. Future suites should add real-model golden images, overload behavior, Android/server serialization compatibility and end-to-end latency on the remote host.

@@ -1,3 +1,5 @@
-# InfluxDB
+# InfluxDB — not in the baseline
 
-Candidate persistent store for time-series experiment data. Its final schema and retention policy will be defined with the mobile export contract. InfluxDB must not be exposed directly to mobile clients.
+InfluxDB is deliberately deferred. Per-frame experiment data is returned to and persisted by `PPEMobilePlatform`, which produces the authoritative ordered JSONL.
+
+The first remote deployment uses Prometheus only for aggregate operational monitoring. Introducing any server-side event store requires a separate architecture decision, retention limit, privacy review and evidence that mobile-owned logging is insufficient.

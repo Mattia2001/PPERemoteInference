@@ -1,106 +1,111 @@
-# Remote inference API contract draft
+# Remote inference API contract v1
 
-The contract is versioned under `/v1`. Field names follow the Android domain model where practical. This document is a draft until shared serialization tests exist in both repositories.
+The first stable HTTP contract is versioned under `/v1`. JSON field names use `camelCase`; coordinates are returned both normalized and in source-image pixels. The service is stateless: the response is returned to the phone and is not persisted server-side.
 
-## Health
+## Ordering and ownership
 
-`GET /health`
+Every request carries three independent identifiers:
 
-Confirms that the API process is alive. It must not require the GPU to be ready.
+- `frameId`: unique opaque frame identifier;
+- `sequenceNumber`: monotonically increasing experiment sequence used by the phone to restore order;
+- `captureTimestampMs`: phone capture timestamp (Unix epoch milliseconds).
 
-```json
-{
-  "status": "ok"
-}
-```
+The server echoes all three fields. Server completion order is not guaranteed. The Android client is the sole owner of the ordered experiment JSONL.
 
-## Readiness
+## Liveness and readiness
 
-`GET /ready`
+`GET /health` checks only the API process. `GET /v1/ready` checks that the configured inference backend and model are ready. `/ready` is retained as a convenience alias.
 
-Confirms that the selected model is loaded and the inference runtime can accept work.
+## Capabilities and status
 
-```json
-{
-  "status": "ready",
-  "device": "cuda:0",
-  "modelId": "yolo11n-sh17-baseline",
-  "modelVersion": "1"
-}
-```
+`GET /v1/capabilities` returns API version, model identity, canonical classes, input size, runtime and device. `GET /v1/status` additionally returns bounded operational state such as queue capacity and a best-effort GPU snapshot. These responses are intended for the mobile dashboard and offloading eligibility checks.
 
 ## Inference
 
-`POST /v1/inference`
-
-Initial transport: `multipart/form-data`.
+`POST /v1/inference` uses `multipart/form-data`.
 
 | Part | Type | Required | Description |
 |---|---|---:|---|
-| `frame` | JPEG binary | yes | Encoded source frame |
-| `metadata` | JSON | yes | Request identity and inference configuration |
+| `frame` | JPEG or PNG binary | yes | Encoded source frame |
+| `metadata` | JSON string | yes | Request identity and inference configuration |
 
 Example metadata:
 
 ```json
 {
+  "apiVersion": "1.0",
   "frameId": "frame_000001",
-  "timestampGeneration": 1782900984463,
-  "modelId": "yolo11n-sh17-baseline",
-  "selectedPPEs": ["HELMET", "SAFETY_VEST", "GLOVES", "SHOES"]
+  "sequenceNumber": 1,
+  "captureTimestampMs": 1782900984463,
+  "modelId": "yolo26n-ppe-v2-960",
+  "selectedClasses": ["person", "helmet", "safety_vest", "gloves", "safety_boots"]
 }
 ```
 
-Example successful response:
+Successful response (abridged):
 
 ```json
 {
+  "apiVersion": "1.0",
   "frameId": "frame_000001",
-  "modelId": "yolo11n-sh17-baseline",
-  "modelVersion": "1",
-  "serverTiming": {
-    "queueTimeMs": 0.8,
-    "preprocessTimeMs": 2.1,
-    "inferenceTimeMs": 8.4,
-    "postprocessTimeMs": 1.7,
-    "totalServerTimeMs": 13.0
+  "sequenceNumber": 1,
+  "captureTimestampMs": 1782900984463,
+  "serverReceiveTimestampMs": 1782900984510,
+  "serverCompleteTimestampMs": 1782900984524,
+  "model": {
+    "modelId": "yolo26n-ppe-v2-960",
+    "modelVersion": "1",
+    "runtime": "ultralytics",
+    "device": "cuda:0",
+    "inputSize": 960
   },
-  "detectionResult": {
-    "frameWidth": 1920,
-    "frameHeight": 1080,
-    "persons": [
-      {
-        "personId": "person_0",
-        "globalConfidence": 0.94,
-        "personBox": {
-          "x": 0.2,
-          "y": 0.18,
-          "width": 0.55,
-          "height": 0.7
-        },
-        "ppeDetections": [
-          {
-            "ppeType": "HELMET",
-            "confidence": 0.91,
-            "boundingBox": {
-              "x": 0.35,
-              "y": 0.2,
-              "width": 0.22,
-              "height": 0.14
-            }
-          }
-        ]
-      }
-    ]
+  "image": {"width": 1920, "height": 1080},
+  "detections": [
+    {
+      "detectionId": "det_0",
+      "classId": 1,
+      "className": "helmet",
+      "confidence": 0.91,
+      "boxNormalized": {"x": 0.35, "y": 0.20, "width": 0.22, "height": 0.14},
+      "boxPixels": {"x": 672, "y": 216, "width": 422, "height": 151},
+      "associatedPersonId": "det_person_0"
+    }
+  ],
+  "timing": {
+    "queueMs": 0.8,
+    "decodeMs": 2.1,
+    "preprocessMs": 0.4,
+    "inferenceMs": 8.4,
+    "postprocessMs": 1.7,
+    "totalServerMs": 13.4
   }
 }
 ```
 
-Bounding-box coordinates are normalized to `[0, 1]`, with `x` and `y` representing the top-left corner. Responses must echo the request `frameId`, including error responses where parsing reached that field.
+`selectedClasses` is an output filter, not a request for a different model. An empty or omitted list means all canonical classes.
 
-## Error principles
+## Errors
 
-- Use stable machine-readable error codes.
-- Distinguish invalid image, unsupported model, overload and internal failure.
-- Reject oversized or unsupported payloads before inference.
-- Include no image data in errors or standard logs.
+Errors use a stable envelope and HTTP status:
+
+```json
+{
+  "apiVersion": "1.0",
+  "error": {
+    "code": "MODEL_MISMATCH",
+    "message": "Requested model is not deployed",
+    "retryable": false
+  },
+  "frameId": "frame_000001",
+  "sequenceNumber": 1
+}
+```
+
+Initial codes include `INVALID_METADATA`, `INVALID_IMAGE`, `PAYLOAD_TOO_LARGE`, `UNSUPPORTED_MEDIA_TYPE`, `MODEL_MISMATCH`, `NOT_READY`, `OVERLOADED` and `INTERNAL_ERROR`.
+
+## Privacy and observability invariant
+
+- Frame bytes and detections are held only for the request lifetime.
+- Standard logs must not contain images, bounding boxes or confidences.
+- Prometheus exposes aggregate counters and latency histograms only, with bounded labels.
+- A future streaming/WebSocket transport must preserve the same identity, ordering and error semantics.

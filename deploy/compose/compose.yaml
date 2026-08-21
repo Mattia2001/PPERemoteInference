@@ -1,0 +1,36 @@
+services:
+  inference-api:
+    build:
+      context: ../../services/api
+    image: ppe-remote-inference-api:dev
+    restart: unless-stopped
+    environment:
+      PPE_BACKEND: ${PPE_BACKEND:-mock}
+      PPE_MODEL_PATH: ${PPE_MODEL_PATH:-/models/best.pt}
+      PPE_MODEL_ID: ${PPE_MODEL_ID:-yolo26n-ppe-v2-960}
+      PPE_MODEL_VERSION: ${PPE_MODEL_VERSION:-1}
+      PPE_RUNTIME: ${PPE_RUNTIME:-ultralytics}
+      PPE_DEVICE: ${PPE_DEVICE:-cuda:0}
+      PPE_INPUT_SIZE: ${PPE_INPUT_SIZE:-960}
+      PPE_CONFIDENCE: ${PPE_CONFIDENCE:-0.25}
+      PPE_IOU: ${PPE_IOU:-0.45}
+      PPE_MAX_PAYLOAD_BYTES: ${PPE_MAX_PAYLOAD_BYTES:-8388608}
+      PPE_MAX_CONCURRENCY: ${PPE_MAX_CONCURRENCY:-1}
+      PPE_QUEUE_TIMEOUT_MS: ${PPE_QUEUE_TIMEOUT_MS:-100}
+      PPE_BEARER_TOKEN: ${PPE_BEARER_TOKEN:-}
+    ports:
+      - "${PPE_BIND_ADDRESS:-127.0.0.1}:${PPE_API_PORT:-8080}:8080"
+    volumes:
+      - ../../models:/models:ro
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/v1/ready', timeout=2)"]
+      interval: 10s
+      timeout: 3s
+      retries: 6
+      start_period: 30s
+    networks:
+      - ppe-private
+
+networks:
+  ppe-private:
+    internal: true

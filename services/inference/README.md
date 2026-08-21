@@ -1,16 +1,7 @@
-# Inference service
+# Inference backend
 
-Planned GPU-backed computer-vision service.
+The first backend is implemented in-process in `services/api/app/backend.py`. On the current single-GPU host, a separate inference microservice would add serialization and network overhead without providing isolation that is yet justified by measurements.
 
-Responsibilities:
+The backend contract is intentionally small: load one deployment model at startup and return canonical detections plus stage timing. `mock` and `ultralytics` implementations exist. TensorRT can be introduced behind the same interface after exporting and validating an engine on the RTX 3050.
 
-- load each configured model once at startup;
-- expose model identity, version and readiness;
-- decode and preprocess frames;
-- execute inference on CUDA with an explicit CPU fallback policy;
-- perform postprocessing and non-maximum suppression;
-- associate PPE detections with people;
-- emit normalized bounding boxes and timing information;
-- reject unsupported model requests deterministically.
-
-The first deployment will use the same model as the Android baseline. A stronger remote model will be introduced as a separately versioned experiment.
+Split this into a separate service only if profiling or multi-model scheduling demonstrates a concrete need.
