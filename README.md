@@ -42,7 +42,7 @@ PPERemoteInference/
 ├── models/                  # Model registry documentation, no weights
 ├── docs/
 │   └── decisions/           # Architecture decision records
-├── scripts/                 # Future operational utilities
+├── scripts/                 # Reference client and operational utilities
 └── tests/                   # Test strategy; executable API tests live with the service
 ```
 
@@ -66,7 +66,7 @@ Only frames and metadata are transferred. Application code, containers and neura
 
 1. [x] Implement health and readiness probes.
 2. [x] Define and test the versioned inference API.
-3. [ ] Load the same baseline model used on Android for a controlled local/offload comparison.
+3. [ ] Load the same baseline model used on Android for a controlled local/offload comparison (deployment pending; client ready).
 4. [x] Package API and inference in Docker Compose.
 5. Benchmark latency, throughput and GPU memory.
 6. Add Prometheus, Grafana and NVIDIA GPU telemetry; do not add a per-frame database.
@@ -91,3 +91,7 @@ pytest
 ```
 
 Set `PPE_BACKEND=ultralytics` and mount a checkpoint through `PPE_MODEL_PATH` to run a real `.pt` or TensorRT `.engine` model. See [services/api/README.md](services/api/README.md).
+
+For the first private-VPN image/video round trip, use the reference laptop
+client and follow [docs/first-end-to-end-test.md](docs/first-end-to-end-test.md).
+The Android remote-frame transport remains a separate milestone.
