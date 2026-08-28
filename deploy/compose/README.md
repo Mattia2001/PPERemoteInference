@@ -22,7 +22,12 @@ docker compose --env-file .env \
   -f deploy/compose/compose.gpu.yaml up --build
 ```
 
-The API has no data volume. The model mount is read-only. HTTPS and authentication are mandatory before phone traffic is admitted; they belong to the following reverse-proxy milestone.
+The API has no data volume. The model mount is read-only. The Compose bridge
+must not be marked `internal`: an internally isolated Docker network prevents
+the host publication required by the controlled VPN/LAN smoke test. Exposure
+remains restricted by `PPE_BIND_ADDRESS`, whose safe default is loopback.
+HTTPS and authentication are mandatory before phone traffic is admitted; they
+belong to the following reverse-proxy milestone.
 
 ## Deploying the existing YOLO26n 640 and 960 models
 

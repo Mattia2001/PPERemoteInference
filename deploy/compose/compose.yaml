@@ -33,4 +33,4 @@ services:
 
 networks:
   ppe-private:
-    internal: true
+    driver: bridge

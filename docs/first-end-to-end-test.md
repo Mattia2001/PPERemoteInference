@@ -51,6 +51,11 @@ sudo docker compose -p ppe-yolo26n-640 \
 Do not start both models for the first test. One known workload removes
 avoidable RTX 3050 VRAM pressure and diagnosis ambiguity.
 
+The Compose network is a normal bridge rather than an `internal` network.
+Binding the published port to the explicitly selected host address provides
+the restriction for this smoke test; an internal Docker network would suppress
+the host-facing publication entirely.
+
 ## Laptop procedure
 
 1. Connect the DrayTek VPN.
