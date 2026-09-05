@@ -1,0 +1,42 @@
+groups:
+  - name: ppe-remote-inference
+    rules:
+      - alert: PPEInferenceApiDown
+        expr: up{job="inference-api"} == 0
+        for: 20s
+        labels:
+          severity: critical
+        annotations:
+          summary: PPE remote inference API is unavailable
+
+      - alert: PPEInferenceExporterDown
+        expr: up{job=~"node-exporter|cadvisor|dcgm-exporter"} == 0
+        for: 30s
+        labels:
+          severity: warning
+        annotations:
+          summary: "Telemetry target {{ $labels.job }} is unavailable"
+
+      - alert: PPEInferenceQueueBacklog
+        expr: ppe_inference_queue_depth > 0
+        for: 10s
+        labels:
+          severity: warning
+        annotations:
+          summary: Remote inference requests are waiting for an execution slot
+
+      - alert: PPEInferenceHighServerLatency
+        expr: histogram_quantile(0.95, sum by (le) (rate(ppe_inference_server_seconds_bucket[2m]))) > 0.2
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: P95 server residency exceeds 200 ms
+
+      - alert: PPEInferenceGpuHot
+        expr: DCGM_FI_DEV_GPU_TEMP > 85
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: NVIDIA GPU temperature exceeds 85 C

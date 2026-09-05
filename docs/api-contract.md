@@ -20,6 +20,12 @@ The server echoes all three fields. Server completion order is not guaranteed. T
 
 `GET /v1/capabilities` returns API version, model identity, canonical classes, input size, runtime and device. `GET /v1/status` additionally returns bounded operational state such as queue capacity and a best-effort GPU snapshot. These responses are intended for the mobile dashboard and offloading eligibility checks.
 
+The status payload also reports the startup warm-up result. With the default
+`PPE_WARMUP_RUNS=1`, one synthetic portrait inference completes before readiness.
+`PPE_WARMUP_FRAME_WIDTH` and `PPE_WARMUP_FRAME_HEIGHT` should match the mobile
+acquisition profile so the first user frame does not pay a new Ultralytics input
+shape initialization cost.
+
 ## Inference
 
 `POST /v1/inference` uses `multipart/form-data`.

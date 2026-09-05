@@ -20,3 +20,10 @@ pytest services/api/tests
 ```
 
 No frame or detection persistence is implemented by design. See [the API contract](../../docs/api-contract.md) and [ADR 0004](../../docs/decisions/0004-mobile-owned-experiment-log.md).
+
+Operational metrics contain no request identifiers or detection values. They
+cover request outcomes, encoded payload size, server and model-stage latency,
+queueing, concurrency, warm-up and deployed model identity. The representative
+warm-up frame defaults to portrait 1080x1920 so the first mobile request uses
+the same Ultralytics input shape; change `PPE_WARMUP_FRAME_WIDTH` and
+`PPE_WARMUP_FRAME_HEIGHT` when the acquisition profile changes.

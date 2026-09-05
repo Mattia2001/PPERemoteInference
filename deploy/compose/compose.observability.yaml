@@ -1,0 +1,98 @@
+services:
+  inference-api:
+    labels:
+      ppe.component: inference-api
+
+  prometheus:
+    image: prom/prometheus:v3.14.0
+    restart: unless-stopped
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=${PPE_PROMETHEUS_RETENTION:-7d}
+      - --storage.tsdb.retention.size=${PPE_PROMETHEUS_RETENTION_SIZE:-2GB}
+      - --web.enable-lifecycle
+    ports:
+      - "${PPE_OBSERVABILITY_BIND_ADDRESS:-127.0.0.1}:${PPE_PROMETHEUS_PORT:-9090}:9090"
+    volumes:
+      - ../../observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ../../observability/prometheus/alerts.yml:/etc/prometheus/alerts.yml:ro
+      - prometheus-data:/prometheus
+    depends_on:
+      - inference-api
+      - node-exporter
+      - cadvisor
+      - dcgm-exporter
+    networks:
+      - ppe-private
+
+  grafana:
+    image: grafana/grafana:13.1.0
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_USER: ${PPE_GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${PPE_GRAFANA_ADMIN_PASSWORD:?Set PPE_GRAFANA_ADMIN_PASSWORD in the observability env file}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+      GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
+      GF_SERVER_DOMAIN: localhost
+    ports:
+      - "${PPE_OBSERVABILITY_BIND_ADDRESS:-127.0.0.1}:${PPE_GRAFANA_PORT:-3000}:3000"
+    volumes:
+      - ../../observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ../../observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
+    depends_on:
+      - prometheus
+    networks:
+      - ppe-private
+
+  node-exporter:
+    image: prom/node-exporter:v1.10.2
+    restart: unless-stopped
+    command:
+      - --path.procfs=/host/proc
+      - --path.rootfs=/rootfs
+      - --path.sysfs=/host/sys
+      - --collector.processes
+    pid: host
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro,rslave
+    networks:
+      - ppe-private
+
+  cadvisor:
+    image: ghcr.io/google/cadvisor:v0.60.5
+    restart: unless-stopped
+    privileged: true
+    devices:
+      - /dev/kmsg:/dev/kmsg
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker:/var/lib/docker:ro
+      - /dev/disk:/dev/disk:ro
+    command:
+      - --docker_only=true
+      - --housekeeping_interval=2s
+    networks:
+      - ppe-private
+
+  dcgm-exporter:
+    image: nvcr.io/nvidia/k8s/dcgm-exporter:4.5.3-4.8.2-distroless
+    restart: unless-stopped
+    cap_add:
+      - SYS_ADMIN
+    environment:
+      DCGM_EXPORTER_INTERVAL: "2000"
+    gpus: all
+    networks:
+      - ppe-private
+
+volumes:
+  prometheus-data:
+  grafana-data:

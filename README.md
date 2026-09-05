@@ -6,7 +6,10 @@ The repository will host the services deployed on the on-premise GPU server used
 
 ## Current status
 
-This repository contains the agreed architecture, a versioned API contract and the first executable stateless inference service. The mobile application remains the authoritative owner of per-frame experiment records.
+This repository contains the agreed architecture, a versioned API contract, an
+executable stateless inference service and a provisioned Prometheus/Grafana
+operations stack. The mobile application remains the authoritative owner of
+per-frame experiment records.
 
 The server preflight has confirmed:
 
@@ -66,10 +69,10 @@ Only frames and metadata are transferred. Application code, containers and neura
 
 1. [x] Implement health and readiness probes.
 2. [x] Define and test the versioned inference API.
-3. [ ] Load the same baseline model used on Android for a controlled local/offload comparison (deployment pending; client ready).
+3. [x] Load the same baseline model used on Android for a controlled local/offload comparison.
 4. [x] Package API and inference in Docker Compose.
 5. Benchmark latency, throughput and GPU memory.
-6. Add Prometheus, Grafana and NVIDIA GPU telemetry; do not add a per-frame database.
+6. [x] Add Prometheus, Grafana and NVIDIA GPU telemetry; do not add a per-frame database.
 7. Introduce a stronger remote model as a separate experiment.
 8. Evaluate Kubernetes and Helm when the server must host multiple projects.
 

@@ -31,9 +31,14 @@ class Backend(Protocol):
 
     def predict(self, image: np.ndarray) -> Prediction: ...
 
+    def warm_up(self, runs: int) -> None: ...
+
 
 class MockBackend:
     ready = True
+
+    def warm_up(self, runs: int) -> None:
+        return None
 
     def predict(self, image: np.ndarray) -> Prediction:
         return Prediction(detections=[])
@@ -49,6 +54,21 @@ class UltralyticsBackend:
         self.settings = settings
         self.model = YOLO(str(path), task="detect")
         self.ready = True
+
+    def warm_up(self, runs: int) -> None:
+        if runs <= 0:
+            return
+        image = np.full(
+            (
+                self.settings.warmup_frame_height,
+                self.settings.warmup_frame_width,
+                3,
+            ),
+            114,
+            dtype=np.uint8,
+        )
+        for _ in range(runs):
+            self.predict(image)
 
     def predict(self, image: np.ndarray) -> Prediction:
         result = self.model.predict(

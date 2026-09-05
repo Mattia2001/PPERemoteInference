@@ -1,0 +1,266 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": { "type": "grafana", "uid": "-- Grafana --" },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": false,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "liveNow": true,
+  "panels": [
+    {
+      "datasource": { "type": "prometheus", "uid": "ppe-prometheus" },
+      "fieldConfig": { "defaults": { "mappings": [{ "options": { "0": { "color": "red", "text": "DOWN" }, "1": { "color": "green", "text": "UP" } }, "type": "value" }], "thresholds": { "mode": "absolute", "steps": [{ "color": "red", "value": null }, { "color": "green", "value": 1 }] } }, "overrides": [] },
+      "gridPos": { "h": 4, "w": 4, "x": 0, "y": 0 },
+      "id": 1,
+      "options": { "colorMode": "background", "graphMode": "none", "justifyMode": "center", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "textMode": "auto", "wideLayout": true },
+      "targets": [{ "expr": "max(up{job=\"inference-api\"})", "refId": "A" }],
+      "title": "Inference API",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "ppe-prometheus" },
+      "fieldConfig": { "defaults": { "decimals": 2, "unit": "reqps" }, "overrides": [] },
+      "gridPos": { "h": 4, "w": 4, "x": 4, "y": 0 },
+      "id": 2,
+      "options": { "colorMode": "value", "graphMode": "area", "justifyMode": "auto", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "textMode": "auto", "wideLayout": true },
+      "targets": [{ "expr": "sum(rate(ppe_inference_requests_total[30s]))", "refId": "A" }],
+      "title": "Request rate",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "ppe-prometheus" },
+      "fieldConfig": { "defaults": { "decimals": 2, "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 0.01 }, { "color": "red", "value": 0.05 }] }, "unit": "percentunit" }, "overrides": [] },
+      "gridPos": { "h": 4, "w": 4, "x": 8, "y": 0 },
+      "id": 3,
+      "options": { "colorMode": "value", "graphMode": "area", "justifyMode": "auto", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "textMode": "auto", "wideLayout": true },
+      "targets": [{ "expr": "sum(rate(ppe_inference_requests_total{outcome!=\"success\"}[2m])) / clamp_min(sum(rate(ppe_inference_requests_total[2m])), 0.000001)", "refId": "A" }],
+      "title": "Error rate",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "ppe-prometheus" },
+      "fieldConfig": { "defaults": { "decimals": 1, "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 100 }, { "color": "red", "value": 200 }] }, "unit": "ms" }, "overrides": [] },
+      "gridPos": { "h": 4, "w": 4, "x": 12, "y": 0 },
+      "id": 4,
+      "options": { "colorMode": "value", "graphMode": "area", "justifyMode": "auto", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "textMode": "auto", "wideLayout": true },
+      "targets": [{ "expr": "histogram_quantile(0.95, sum by (le) (rate(ppe_inference_server_seconds_bucket[30s]))) * 1000", "refId": "A" }],
+      "title": "Server latency P95",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "ppe-prometheus" },
+      "fieldConfig": { "defaults": { "decimals": 0, "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "red", "value": 1 }] } }, "overrides": [] },
+      "gridPos": { "h": 4, "w": 4, "x": 16, "y": 0 },
+      "id": 5,
+      "options": { "colorMode": "value", "graphMode": "area", "justifyMode": "auto", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "textMode": "auto", "wideLayout": true },
+      "targets": [{ "expr": "max(ppe_inference_queue_depth)", "refId": "A" }],
+      "title": "Queue depth",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "ppe-prometheus" },
+      "fieldConfig": { "defaults": { "decimals": 0, "max": 100, "min": 0, "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 75 }, { "color": "red", "value": 90 }] }, "unit": "percent" }, "overrides": [] },
+      "gridPos": { "h": 4, "w": 4, "x": 20, "y": 0 },
+      "id": 6,
+      "options": { "colorMode": "value", "graphMode": "area", "justifyMode": "auto", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "textMode": "auto", "wideLayout": true },
+      "targets": [{ "expr": "max(DCGM_FI_DEV_GPU_UTIL)", "refId": "A" }],
+      "title": "GPU utilization",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "ppe-prometheus" },
+      "fieldConfig": { "defaults": { "custom": { "axisCenteredZero": false, "drawStyle": "line", "fillOpacity": 8, "lineWidth": 2, "showPoints": "never" }, "unit": "ms" }, "overrides": [] },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
+      "id": 7,
+      "options": { "legend": { "calcs": ["mean", "lastNotNull", "max"], "displayMode": "table", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "multi", "sort": "desc" } },
+      "targets": [
+        { "expr": "histogram_quantile(0.50, sum by (le) (rate(ppe_inference_server_seconds_bucket[30s]))) * 1000", "legendFormat": "P50", "refId": "A" },
+        { "expr": "histogram_quantile(0.95, sum by (le) (rate(ppe_inference_server_seconds_bucket[30s]))) * 1000", "legendFormat": "P95", "refId": "B" },
+        { "expr": "histogram_quantile(0.99, sum by (le) (rate(ppe_inference_server_seconds_bucket[30s]))) * 1000", "legendFormat": "P99", "refId": "C" }
+      ],
+      "title": "Server residency latency",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "ppe-prometheus" },
+      "fieldConfig": { "defaults": { "custom": { "axisCenteredZero": false, "drawStyle": "line", "fillOpacity": 6, "lineWidth": 2, "showPoints": "never" }, "unit": "ms" }, "overrides": [] },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 4 },
+      "id": 8,
+      "options": { "legend": { "calcs": ["mean", "lastNotNull", "max"], "displayMode": "table", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "multi", "sort": "desc" } },
+      "targets": [
+        { "expr": "histogram_quantile(0.95, sum by (le) (rate(ppe_inference_decode_seconds_bucket[30s]))) * 1000", "legendFormat": "decode P95", "refId": "A" },
+        { "expr": "histogram_quantile(0.95, sum by (le) (rate(ppe_inference_preprocess_seconds_bucket[30s]))) * 1000", "legendFormat": "preprocess P95", "refId": "B" },
+        { "expr": "histogram_quantile(0.95, sum by (le) (rate(ppe_inference_model_seconds_bucket[30s]))) * 1000", "legendFormat": "model P95", "refId": "C" },
+        { "expr": "histogram_quantile(0.95, sum by (le) (rate(ppe_inference_postprocess_seconds_bucket[30s]))) * 1000", "legendFormat": "postprocess P95", "refId": "D" },
+        { "expr": "histogram_quantile(0.95, sum by (le) (rate(ppe_inference_queue_seconds_bucket[30s]))) * 1000", "legendFormat": "queue P95", "refId": "E" }
+      ],
+      "title": "Server stages P95",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "ppe-prometheus" },
+      "fieldConfig": { "defaults": { "custom": { "axisCenteredZero": false, "drawStyle": "line", "fillOpacity": 8, "lineWidth": 2, "showPoints": "never" }, "unit": "Bps" }, "overrides": [] },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 12 },
+      "id": 9,
+      "options": { "legend": { "calcs": ["mean", "lastNotNull", "max"], "displayMode": "table", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "multi", "sort": "desc" } },
+      "targets": [
+        { "expr": "rate(node_network_receive_bytes_total{device!~\"lo|veth.*|docker.*|br-.*\"}[10s])", "legendFormat": "RX {{device}}", "refId": "A" },
+        { "expr": "rate(node_network_transmit_bytes_total{device!~\"lo|veth.*|docker.*|br-.*\"}[10s])", "legendFormat": "TX {{device}}", "refId": "B" }
+      ],
+      "title": "Host network traffic by interface",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "ppe-prometheus" },
+      "fieldConfig": { "defaults": { "custom": { "axisCenteredZero": false, "drawStyle": "line", "fillOpacity": 8, "lineWidth": 2, "showPoints": "never" }, "unit": "Bps" }, "overrides": [] },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 12 },
+      "id": 10,
+      "options": { "legend": { "calcs": ["mean", "lastNotNull", "max"], "displayMode": "table", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "multi", "sort": "desc" } },
+      "targets": [
+        { "expr": "sum by (name) (rate(container_network_receive_bytes_total{name!=\"\"}[10s]))", "legendFormat": "RX {{name}}", "refId": "A" },
+        { "expr": "sum by (name) (rate(container_network_transmit_bytes_total{name!=\"\"}[10s]))", "legendFormat": "TX {{name}}", "refId": "B" }
+      ],
+      "title": "Container network traffic",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "ppe-prometheus" },
+      "fieldConfig": { "defaults": { "custom": { "axisCenteredZero": false, "drawStyle": "line", "fillOpacity": 8, "lineWidth": 2, "showPoints": "never" }, "unit": "percent" }, "overrides": [] },
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 20 },
+      "id": 11,
+      "options": { "legend": { "calcs": ["mean", "lastNotNull", "max"], "displayMode": "table", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "multi", "sort": "desc" } },
+      "targets": [
+        { "expr": "100 - avg(rate(node_cpu_seconds_total{mode=\"idle\"}[10s])) * 100", "legendFormat": "host CPU", "refId": "A" },
+        { "expr": "(1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) * 100", "legendFormat": "host RAM", "refId": "B" }
+      ],
+      "title": "Host utilization",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "ppe-prometheus" },
+      "fieldConfig": { "defaults": { "custom": { "axisCenteredZero": false, "drawStyle": "line", "fillOpacity": 8, "lineWidth": 2, "showPoints": "never" }, "unit": "percent" }, "overrides": [] },
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 20 },
+      "id": 12,
+      "options": { "legend": { "calcs": ["mean", "lastNotNull", "max"], "displayMode": "table", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "multi", "sort": "desc" } },
+      "targets": [
+        { "expr": "max by (gpu) (DCGM_FI_DEV_GPU_UTIL)", "legendFormat": "GPU {{gpu}} utilization", "refId": "A" },
+        { "expr": "100 * max by (gpu) (DCGM_FI_DEV_FB_USED) / (max by (gpu) (DCGM_FI_DEV_FB_USED) + max by (gpu) (DCGM_FI_DEV_FB_FREE))", "legendFormat": "GPU {{gpu}} VRAM", "refId": "B" }
+      ],
+      "title": "GPU and VRAM utilization",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "ppe-prometheus" },
+      "fieldConfig": { "defaults": { "custom": { "axisCenteredZero": false, "drawStyle": "line", "fillOpacity": 8, "lineWidth": 2, "showPoints": "never" } }, "overrides": [{ "matcher": { "id": "byName", "options": "temperature" }, "properties": [{ "id": "unit", "value": "celsius" }] }, { "matcher": { "id": "byName", "options": "power" }, "properties": [{ "id": "unit", "value": "watt" }] }] },
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 20 },
+      "id": 13,
+      "options": { "legend": { "calcs": ["mean", "lastNotNull", "max"], "displayMode": "table", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "multi", "sort": "desc" } },
+      "targets": [
+        { "expr": "max(DCGM_FI_DEV_GPU_TEMP)", "legendFormat": "temperature", "refId": "A" },
+        { "expr": "max(DCGM_FI_DEV_POWER_USAGE)", "legendFormat": "power", "refId": "B" }
+      ],
+      "title": "GPU temperature and power",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "ppe-prometheus" },
+      "fieldConfig": { "defaults": { "custom": { "axisCenteredZero": false, "drawStyle": "line", "fillOpacity": 8, "lineWidth": 2, "showPoints": "never" }, "unit": "percent" }, "overrides": [] },
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 28 },
+      "id": 14,
+      "options": { "legend": { "calcs": ["mean", "lastNotNull", "max"], "displayMode": "table", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "multi", "sort": "desc" } },
+      "targets": [{ "expr": "sum by (name) (rate(container_cpu_usage_seconds_total{name!=\"\"}[10s])) * 100", "legendFormat": "{{name}}", "refId": "A" }],
+      "title": "Container CPU",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "ppe-prometheus" },
+      "fieldConfig": { "defaults": { "custom": { "axisCenteredZero": false, "drawStyle": "line", "fillOpacity": 8, "lineWidth": 2, "showPoints": "never" }, "unit": "bytes" }, "overrides": [] },
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 28 },
+      "id": 15,
+      "options": { "legend": { "calcs": ["mean", "lastNotNull", "max"], "displayMode": "table", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "multi", "sort": "desc" } },
+      "targets": [{ "expr": "sum by (name) (container_memory_working_set_bytes{name!=\"\"})", "legendFormat": "{{name}}", "refId": "A" }],
+      "title": "Container memory working set",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "ppe-prometheus" },
+      "fieldConfig": { "defaults": { "custom": { "axisCenteredZero": false, "drawStyle": "line", "fillOpacity": 8, "lineWidth": 2, "showPoints": "never" }, "unit": "decbytes" }, "overrides": [] },
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 28 },
+      "id": 16,
+      "options": { "legend": { "calcs": ["mean", "lastNotNull", "max"], "displayMode": "table", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "multi", "sort": "desc" } },
+      "targets": [
+        { "expr": "histogram_quantile(0.50, sum by (le) (rate(ppe_inference_request_bytes_bucket[30s])))", "legendFormat": "payload P50", "refId": "A" },
+        { "expr": "histogram_quantile(0.95, sum by (le) (rate(ppe_inference_request_bytes_bucket[30s])))", "legendFormat": "payload P95", "refId": "B" }
+      ],
+      "title": "Encoded request payload",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "ppe-prometheus" },
+      "fieldConfig": { "defaults": { "custom": { "axisCenteredZero": false, "drawStyle": "line", "fillOpacity": 8, "lineWidth": 2, "showPoints": "never" } }, "overrides": [] },
+      "gridPos": { "h": 7, "w": 12, "x": 0, "y": 36 },
+      "id": 17,
+      "options": { "legend": { "calcs": ["sum", "lastNotNull"], "displayMode": "table", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "multi", "sort": "desc" } },
+      "targets": [{ "expr": "sum by (outcome) (rate(ppe_inference_requests_total[30s]))", "legendFormat": "{{outcome}}", "refId": "A" }],
+      "title": "Inference outcomes",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "ppe-prometheus" },
+      "fieldConfig": { "defaults": { "custom": { "axisCenteredZero": false, "drawStyle": "line", "fillOpacity": 8, "lineWidth": 2, "showPoints": "never" } }, "overrides": [] },
+      "gridPos": { "h": 7, "w": 12, "x": 12, "y": 36 },
+      "id": 18,
+      "options": { "legend": { "calcs": ["mean", "lastNotNull", "max"], "displayMode": "table", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "multi", "sort": "desc" } },
+      "targets": [
+        { "expr": "ppe_inference_in_flight", "legendFormat": "executing", "refId": "A" },
+        { "expr": "ppe_inference_queue_depth", "legendFormat": "waiting", "refId": "B" },
+        { "expr": "ppe_inference_max_concurrency", "legendFormat": "capacity", "refId": "C" }
+      ],
+      "title": "Inference concurrency and queue",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "ppe-prometheus" },
+      "fieldConfig": { "defaults": { "displayName": "${__field.labels.job}", "mappings": [{ "options": { "0": { "color": "red", "text": "DOWN" }, "1": { "color": "green", "text": "UP" } }, "type": "value" }], "thresholds": { "mode": "absolute", "steps": [{ "color": "red", "value": null }, { "color": "green", "value": 1 }] } }, "overrides": [] },
+      "gridPos": { "h": 6, "w": 12, "x": 0, "y": 43 },
+      "id": 19,
+      "options": { "colorMode": "background", "graphMode": "none", "justifyMode": "auto", "orientation": "horizontal", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "textMode": "value_and_name", "wideLayout": true },
+      "targets": [{ "expr": "max by (job) (up{job=~\"inference-api|node-exporter|cadvisor|dcgm-exporter|prometheus\"})", "instant": true, "legendFormat": "{{job}}", "refId": "A" }],
+      "title": "Monitoring targets",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "ppe-prometheus" },
+      "fieldConfig": { "defaults": { "decimals": 0, "unit": "s" }, "overrides": [] },
+      "gridPos": { "h": 6, "w": 12, "x": 12, "y": 43 },
+      "id": 20,
+      "options": { "colorMode": "value", "graphMode": "none", "justifyMode": "auto", "orientation": "horizontal", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "textMode": "value_and_name", "wideLayout": true },
+      "targets": [{ "expr": "time() - max by (name) (container_last_seen{name!=\"\"})", "instant": true, "legendFormat": "{{name}}", "refId": "A" }],
+      "title": "Container heartbeat age",
+      "type": "stat"
+    }
+  ],
+  "refresh": "2s",
+  "schemaVersion": 41,
+  "tags": ["ppe", "remote-inference", "gpu"],
+  "templating": { "list": [] },
+  "time": { "from": "now-15m", "to": "now" },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "PPE Remote Inference — Live Operations",
+  "uid": "ppe-remote-live",
+  "version": 1,
+  "weekStart": ""
+}

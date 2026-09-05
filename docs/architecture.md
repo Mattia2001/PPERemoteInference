@@ -24,7 +24,12 @@ Owns preprocessing, GPU execution, postprocessing, non-maximum suppression and c
 
 ### Observability stack
 
-Prometheus collects low-cardinality operational metrics and Grafana visualizes them. NVIDIA DCGM Exporter, node exporter and container metrics describe GPU, host and service health. The baseline has no experiment database. None of these services should be reachable directly from the mobile network.
+Prometheus collects low-cardinality operational metrics and Grafana visualizes
+them. NVIDIA DCGM Exporter, node-exporter and cAdvisor describe GPU, host,
+container and network health. The provisioned dashboard is a live operational
+view, not an experiment database. Prometheus retains a bounded aggregate window;
+Grafana and Prometheus bind to loopback and are reached through an SSH tunnel.
+None of these services is reachable directly from the mobile network.
 
 Prometheus labels must never contain `frameId`, client identifiers, bounding boxes or other unbounded values. Request counts, error classes, latency histograms, queue depth and model identity are acceptable bounded dimensions.
 

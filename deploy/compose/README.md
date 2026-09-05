@@ -75,3 +75,84 @@ curl http://127.0.0.1:8081/v1/status
 curl http://127.0.0.1:8082/v1/status
 docker compose -p ppe-yolo26n-640 -f deploy/compose/compose.yaml logs --tail=100
 ```
+
+## Live observability deployment
+
+The observability overlay adds Prometheus, Grafana, node-exporter, cAdvisor and
+NVIDIA DCGM Exporter to the same Compose project. It persists bounded aggregate
+time series in named Docker volumes, never frames, frame IDs, detections,
+confidences or bounding boxes.
+
+From the repository root on the server, create the untracked configuration once:
+
+```bash
+cp deploy/compose/observability.env.example deploy/compose/observability.env
+nano deploy/compose/observability.env
+```
+
+Replace `PPE_GRAFANA_ADMIN_PASSWORD` with a long unique password. Keep
+`PPE_OBSERVABILITY_BIND_ADDRESS=127.0.0.1`; the dashboards are a management
+surface and must not be exposed to the phone, LAN or public Internet.
+
+Update the existing YOLO26n 640 deployment and start telemetry:
+
+```bash
+docker compose -p ppe-yolo26n-640 \
+  --env-file deploy/compose/yolo26n-640.env \
+  --env-file deploy/compose/observability.env \
+  -f deploy/compose/compose.yaml \
+  -f deploy/compose/compose.gpu.yaml \
+  -f deploy/compose/compose.observability.yaml \
+  up -d --build
+```
+
+Check container state and scrape targets on the server:
+
+```bash
+docker compose -p ppe-yolo26n-640 \
+  --env-file deploy/compose/yolo26n-640.env \
+  --env-file deploy/compose/observability.env \
+  -f deploy/compose/compose.yaml \
+  -f deploy/compose/compose.gpu.yaml \
+  -f deploy/compose/compose.observability.yaml \
+  ps
+
+curl -fsS http://127.0.0.1:9090/-/ready
+curl -fsS http://127.0.0.1:9090/api/v1/targets
+curl -fsS http://127.0.0.1:3000/api/health
+curl -fsS http://127.0.0.1:8081/metrics | grep '^ppe_'
+```
+
+The target list should report `inference-api`, `node-exporter`, `cadvisor`,
+`dcgm-exporter` and `prometheus` as `UP`. The RTX 3050 is supported for DCGM
+field watches, although some datacenter-only counters may be absent.
+
+From Windows, while the VPN is active, open an SSH tunnel and leave it running:
+
+```powershell
+ssh -L 3000:127.0.0.1:3000 -L 9090:127.0.0.1:9090 superuser@192.168.2.126
+```
+
+Then open:
+
+- Grafana: `http://127.0.0.1:3000`;
+- Prometheus targets: `http://127.0.0.1:9090/targets`.
+
+Grafana provisions the Prometheus datasource and the **PPE Remote Inference —
+Live Operations** dashboard automatically. Select a short range such as “Last
+15 minutes” during an offload experiment.
+
+If one exporter fails, inspect only its logs without stopping inference:
+
+```bash
+docker compose -p ppe-yolo26n-640 \
+  --env-file deploy/compose/yolo26n-640.env \
+  --env-file deploy/compose/observability.env \
+  -f deploy/compose/compose.yaml \
+  -f deploy/compose/compose.gpu.yaml \
+  -f deploy/compose/compose.observability.yaml \
+  logs --tail=200 dcgm-exporter cadvisor prometheus grafana
+```
+
+Stopping the stack does not delete time series. Do not add `-v` unless deletion
+of the Prometheus and Grafana named volumes is explicitly intended.
