@@ -1,12 +1,19 @@
 from __future__ import annotations
 
 import io
+import hashlib
 import json
 
 from fastapi.testclient import TestClient
 from PIL import Image
 
-from app.main import app
+from app.main import app, _checkpoint_sha256
+
+
+def test_checkpoint_hash_is_derived_from_file_bytes(tmp_path) -> None:
+    checkpoint = tmp_path / "best.pt"
+    checkpoint.write_bytes(b"checkpoint-content")
+    assert _checkpoint_sha256(str(checkpoint)) == hashlib.sha256(b"checkpoint-content").hexdigest()
 
 
 def jpeg_bytes() -> bytes:
@@ -34,6 +41,7 @@ def test_health_and_readiness() -> None:
         response = client.get("/v1/ready")
         assert response.status_code == 200
         assert response.json()["model"]["runtime"] == "mock"
+        assert response.json()["model"]["modelSha256"] is None
 
 
 def test_status_reports_completed_warmup() -> None:

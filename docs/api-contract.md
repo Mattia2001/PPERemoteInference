@@ -20,6 +20,15 @@ The server echoes all three fields. Server completion order is not guaranteed. T
 
 `GET /v1/capabilities` returns API version, model identity, canonical classes, input size, runtime and device. `GET /v1/status` additionally returns bounded operational state such as queue capacity and a best-effort GPU snapshot. These responses are intended for the mobile dashboard and offloading eligibility checks.
 
+For an Ultralytics backend, every model object in readiness, capabilities,
+status and successful inference now includes `modelSha256`: the SHA-256 of the
+checkpoint file loaded at startup. The mock backend reports `null`. This
+additive v1 field allows the mobile client to reject responses from a changed
+checkpoint. An existing container must be rebuilt to expose it; the filename
+and mutable `modelVersion` label alone are insufficient artifact evidence.
+Each service instance exposes one model. Multiple models require separately
+configured endpoints and GPU-memory validation.
+
 The status payload also reports the startup warm-up result. With the default
 `PPE_WARMUP_RUNS=1`, one synthetic portrait inference completes before readiness.
 `PPE_WARMUP_FRAME_WIDTH` and `PPE_WARMUP_FRAME_HEIGHT` should match the mobile
@@ -61,6 +70,7 @@ Successful response (abridged):
   "model": {
     "modelId": "yolo26n-ppe-v2-960",
     "modelVersion": "1",
+    "modelSha256": "<64-character SHA-256 of deployed best.pt>",
     "runtime": "ultralytics",
     "device": "cuda:0",
     "inputSize": 960

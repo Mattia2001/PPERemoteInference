@@ -76,6 +76,13 @@ curl http://127.0.0.1:8082/v1/status
 docker compose -p ppe-yolo26n-640 -f deploy/compose/compose.yaml logs --tail=100
 ```
 
+The Android model selector discovers each saved `host:port` endpoint through
+`/v1/status` and requires the ready model's `modelSha256`. Rebuild the API
+container after pulling this change; older containers lack that field and are
+not selectable in the new app. A model at another port can be added in the
+phone's Settings without changing the API contract. Deploy larger models one
+at a time initially; check RTX 3050 memory and latency before co-residency.
+
 ## Live observability deployment
 
 The observability overlay adds Prometheus, Grafana, node-exporter, cAdvisor and

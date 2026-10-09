@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import hashlib
 import io
 import json
 import time
@@ -64,12 +65,24 @@ def _now_ms() -> int:
     return int(time.time() * 1000)
 
 
+def _checkpoint_sha256(path: str) -> str:
+    digest = hashlib.sha256()
+    with open(path, "rb") as checkpoint:
+        for chunk in iter(lambda: checkpoint.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     settings = Settings()
     settings.validate()
     app.state.settings = settings
     app.state.backend = create_backend(settings)
+    app.state.model_sha256 = (
+        await asyncio.to_thread(_checkpoint_sha256, settings.model_path)
+        if settings.backend == "ultralytics" else None
+    )
     warmup_started = time.perf_counter()
     await asyncio.to_thread(app.state.backend.warm_up, settings.warmup_runs)
     warmup_ms = (time.perf_counter() - warmup_started) * 1000.0
@@ -164,12 +177,14 @@ def _decode_image(payload: bytes) -> np.ndarray:
         raise ApiError(422, "INVALID_IMAGE", "Frame is not a valid JPEG or PNG") from exc
 
 
-def _model_info(settings: Settings) -> ModelInfo:
+def _model_info(request: Request) -> ModelInfo:
+    settings = request.app.state.settings
     runtime = "mock" if settings.backend == "mock" else settings.runtime
     device = "cpu" if settings.backend == "mock" else settings.device
     return ModelInfo(
         modelId=settings.model_id,
         modelVersion=settings.model_version,
+        modelSha256=request.app.state.model_sha256,
         runtime=runtime,
         device=device,
         inputSize=settings.input_size,
@@ -222,14 +237,14 @@ async def health() -> dict[str, str]:
 async def ready(request: Request) -> dict[str, object]:
     if not request.app.state.backend.ready:
         raise ApiError(503, "NOT_READY", "Inference backend is not ready", True)
-    return {"status": "ready", "apiVersion": request.app.state.settings.api_version, "model": _model_info(request.app.state.settings).model_dump(by_alias=True)}
+    return {"status": "ready", "apiVersion": request.app.state.settings.api_version, "model": _model_info(request).model_dump(by_alias=True)}
 
 
 @app.get("/v1/capabilities", dependencies=[Depends(authorize)])
 async def capabilities(request: Request) -> dict[str, object]:
     return {
         "apiVersion": request.app.state.settings.api_version,
-        "model": _model_info(request.app.state.settings).model_dump(by_alias=True),
+        "model": _model_info(request).model_dump(by_alias=True),
         "classes": list(CANONICAL_CLASSES),
         "transports": ["http-multipart"],
     }
@@ -242,7 +257,7 @@ async def status(request: Request) -> dict[str, object]:
     return {
         "apiVersion": settings.api_version,
         "status": "ready" if request.app.state.backend.ready else "not_ready",
-        "model": _model_info(settings).model_dump(by_alias=True),
+        "model": _model_info(request).model_dump(by_alias=True),
         "queue": {"maxConcurrency": settings.max_concurrency, "availableSlots": semaphore._value},
         "warmUp": request.app.state.warmup,
         "gpu": gpu_snapshot(),
@@ -320,7 +335,7 @@ async def inference(
         captureTimestampMs=parsed.capture_timestamp_ms,
         serverReceiveTimestampMs=received_ms,
         serverCompleteTimestampMs=_now_ms(),
-        model=_model_info(settings),
+        model=_model_info(request),
         image=ImageInfo(width=width, height=height),
         detections=detections,
         timing=Timing(

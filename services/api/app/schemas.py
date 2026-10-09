@@ -47,6 +47,7 @@ class Detection(ApiModel):
 class ModelInfo(ApiModel):
     model_id: str = Field(alias="modelId")
     model_version: str = Field(alias="modelVersion")
+    model_sha256: str | None = Field(default=None, alias="modelSha256")
     runtime: str
     device: str
     input_size: int = Field(alias="inputSize")
