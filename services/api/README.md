@@ -21,6 +21,16 @@ pytest services/api/tests
 
 No frame or detection persistence is implemented by design. See [the API contract](../../docs/api-contract.md) and [ADR 0004](../../docs/decisions/0004-mobile-owned-experiment-log.md).
 
+Color/preprocessing contract for `ultralytics==8.4.112`: the Android app sends an
+oriented JPEG; the API decodes it to RGB, then converts to contiguous BGR at
+the NumPy model boundary because Ultralytics converts NumPy BGR back to RGB.
+Inference uses `rect=False` so the server's letterbox is square, matching the
+mobile LiteRT input geometry. JPEG compression and the Android/Python image
+resizers can still cause small pixel differences; this is channel and geometry
+parity, not bit-for-bit tensor equivalence. After the Android golden-image
+instrumentation test, run the cross-runtime check from `services/api` with
+`python -m tools.check_android_color --adb PATH_TO_ADB --serial DEVICE_SERIAL`.
+
 Operational metrics contain no request identifiers or detection values. They
 cover request outcomes, encoded payload size, server and model-stage latency,
 queueing, concurrency, warm-up and deployed model identity. The representative

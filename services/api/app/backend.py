@@ -7,6 +7,7 @@ from typing import Protocol
 import numpy as np
 
 from .config import Settings
+from .image_color import to_ultralytics_bgr
 from .schemas import CANONICAL_CLASSES
 
 
@@ -71,12 +72,17 @@ class UltralyticsBackend:
             self.predict(image)
 
     def predict(self, image: np.ndarray) -> Prediction:
+        # _decode_image supplies RGB. Ultralytics 8.4.112 assumes NumPy BGR
+        # and reverses channels internally before the model sees RGB.
         result = self.model.predict(
-            source=image,
+            source=to_ultralytics_bgr(image),
             imgsz=self.settings.input_size,
             conf=self.settings.confidence,
             iou=self.settings.iou,
             device=self.settings.device,
+            # Match the mobile square letterbox instead of the PyTorch
+            # predictor's default minimum-rectangle padding.
+            rect=False,
             verbose=False,
         )[0]
         names = result.names

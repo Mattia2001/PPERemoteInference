@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import asyncio
 import hashlib
-import io
 import json
 import time
 from contextlib import asynccontextmanager
@@ -12,12 +11,13 @@ import numpy as np
 from fastapi import Depends, FastAPI, File, Form, Header, Request, UploadFile
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse, Response
-from PIL import Image, UnidentifiedImageError
+from PIL import UnidentifiedImageError
 from prometheus_client import CONTENT_TYPE_LATEST, Counter, Gauge, Histogram, Info, generate_latest
 from pydantic import ValidationError
 
 from .backend import Prediction, create_backend, gpu_snapshot
 from .config import Settings
+from .image_color import decode_rgb
 from .schemas import (
     CANONICAL_CLASSES,
     Box,
@@ -170,9 +170,7 @@ def _parse_metadata(raw: str, settings: Settings) -> InferenceMetadata:
 
 def _decode_image(payload: bytes) -> np.ndarray:
     try:
-        with Image.open(io.BytesIO(payload)) as image:
-            image.load()
-            return np.asarray(image.convert("RGB"))
+        return decode_rgb(payload)
     except (UnidentifiedImageError, OSError, ValueError) as exc:
         raise ApiError(422, "INVALID_IMAGE", "Frame is not a valid JPEG or PNG") from exc
 
