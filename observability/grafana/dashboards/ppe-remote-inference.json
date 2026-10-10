@@ -25,8 +25,8 @@
       "gridPos": { "h": 4, "w": 4, "x": 0, "y": 0 },
       "id": 1,
       "options": { "colorMode": "background", "graphMode": "none", "justifyMode": "center", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "textMode": "auto", "wideLayout": true },
-      "targets": [{ "expr": "max(up{job=\"inference-api\"})", "refId": "A" }],
-      "title": "Inference API",
+      "targets": [{ "expr": "max(up{job=\"inference-api\",model_service=\"${model_service}\"})", "refId": "A" }],
+      "title": "Selected inference API",
       "type": "stat"
     },
     {
@@ -35,7 +35,7 @@
       "gridPos": { "h": 4, "w": 4, "x": 4, "y": 0 },
       "id": 2,
       "options": { "colorMode": "value", "graphMode": "area", "justifyMode": "auto", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "textMode": "auto", "wideLayout": true },
-      "targets": [{ "expr": "sum(rate(ppe_inference_requests_total[30s]))", "refId": "A" }],
+      "targets": [{ "expr": "sum(rate(ppe_inference_requests_total{model_service=\"${model_service}\"}[30s]))", "refId": "A" }],
       "title": "Request rate",
       "type": "stat"
     },
@@ -45,7 +45,7 @@
       "gridPos": { "h": 4, "w": 4, "x": 8, "y": 0 },
       "id": 3,
       "options": { "colorMode": "value", "graphMode": "area", "justifyMode": "auto", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "textMode": "auto", "wideLayout": true },
-      "targets": [{ "expr": "sum(rate(ppe_inference_requests_total{outcome!=\"success\"}[2m])) / clamp_min(sum(rate(ppe_inference_requests_total[2m])), 0.000001)", "refId": "A" }],
+      "targets": [{ "expr": "sum(rate(ppe_inference_requests_total{model_service=\"${model_service}\",outcome!=\"success\"}[2m])) / clamp_min(sum(rate(ppe_inference_requests_total{model_service=\"${model_service}\"}[2m])), 0.000001)", "refId": "A" }],
       "title": "Error rate",
       "type": "stat"
     },
@@ -55,7 +55,7 @@
       "gridPos": { "h": 4, "w": 4, "x": 12, "y": 0 },
       "id": 4,
       "options": { "colorMode": "value", "graphMode": "area", "justifyMode": "auto", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "textMode": "auto", "wideLayout": true },
-      "targets": [{ "expr": "histogram_quantile(0.95, sum by (le) (rate(ppe_inference_server_seconds_bucket[30s]))) * 1000", "refId": "A" }],
+      "targets": [{ "expr": "histogram_quantile(0.95, sum by (le) (rate(ppe_inference_server_seconds_bucket{model_service=\"${model_service}\"}[30s]))) * 1000", "refId": "A" }],
       "title": "Server latency P95",
       "type": "stat"
     },
@@ -65,7 +65,7 @@
       "gridPos": { "h": 4, "w": 4, "x": 16, "y": 0 },
       "id": 5,
       "options": { "colorMode": "value", "graphMode": "area", "justifyMode": "auto", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "textMode": "auto", "wideLayout": true },
-      "targets": [{ "expr": "max(ppe_inference_queue_depth)", "refId": "A" }],
+      "targets": [{ "expr": "max(ppe_inference_queue_depth{model_service=\"${model_service}\"})", "refId": "A" }],
       "title": "Queue depth",
       "type": "stat"
     },
@@ -76,7 +76,7 @@
       "id": 6,
       "options": { "colorMode": "value", "graphMode": "area", "justifyMode": "auto", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "textMode": "auto", "wideLayout": true },
       "targets": [{ "expr": "max(DCGM_FI_DEV_GPU_UTIL)", "refId": "A" }],
-      "title": "GPU utilization",
+      "title": "GPU utilization (host-wide)",
       "type": "stat"
     },
     {
@@ -86,9 +86,9 @@
       "id": 7,
       "options": { "legend": { "calcs": ["mean", "lastNotNull", "max"], "displayMode": "table", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "multi", "sort": "desc" } },
       "targets": [
-        { "expr": "histogram_quantile(0.50, sum by (le) (rate(ppe_inference_server_seconds_bucket[30s]))) * 1000", "legendFormat": "P50", "refId": "A" },
-        { "expr": "histogram_quantile(0.95, sum by (le) (rate(ppe_inference_server_seconds_bucket[30s]))) * 1000", "legendFormat": "P95", "refId": "B" },
-        { "expr": "histogram_quantile(0.99, sum by (le) (rate(ppe_inference_server_seconds_bucket[30s]))) * 1000", "legendFormat": "P99", "refId": "C" }
+        { "expr": "histogram_quantile(0.50, sum by (le) (rate(ppe_inference_server_seconds_bucket{model_service=\"${model_service}\"}[30s]))) * 1000", "legendFormat": "P50", "refId": "A" },
+        { "expr": "histogram_quantile(0.95, sum by (le) (rate(ppe_inference_server_seconds_bucket{model_service=\"${model_service}\"}[30s]))) * 1000", "legendFormat": "P95", "refId": "B" },
+        { "expr": "histogram_quantile(0.99, sum by (le) (rate(ppe_inference_server_seconds_bucket{model_service=\"${model_service}\"}[30s]))) * 1000", "legendFormat": "P99", "refId": "C" }
       ],
       "title": "Server residency latency",
       "type": "timeseries"
@@ -100,11 +100,11 @@
       "id": 8,
       "options": { "legend": { "calcs": ["mean", "lastNotNull", "max"], "displayMode": "table", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "multi", "sort": "desc" } },
       "targets": [
-        { "expr": "histogram_quantile(0.95, sum by (le) (rate(ppe_inference_decode_seconds_bucket[30s]))) * 1000", "legendFormat": "decode P95", "refId": "A" },
-        { "expr": "histogram_quantile(0.95, sum by (le) (rate(ppe_inference_preprocess_seconds_bucket[30s]))) * 1000", "legendFormat": "preprocess P95", "refId": "B" },
-        { "expr": "histogram_quantile(0.95, sum by (le) (rate(ppe_inference_model_seconds_bucket[30s]))) * 1000", "legendFormat": "model P95", "refId": "C" },
-        { "expr": "histogram_quantile(0.95, sum by (le) (rate(ppe_inference_postprocess_seconds_bucket[30s]))) * 1000", "legendFormat": "postprocess P95", "refId": "D" },
-        { "expr": "histogram_quantile(0.95, sum by (le) (rate(ppe_inference_queue_seconds_bucket[30s]))) * 1000", "legendFormat": "queue P95", "refId": "E" }
+        { "expr": "histogram_quantile(0.95, sum by (le) (rate(ppe_inference_decode_seconds_bucket{model_service=\"${model_service}\"}[30s]))) * 1000", "legendFormat": "decode P95", "refId": "A" },
+        { "expr": "histogram_quantile(0.95, sum by (le) (rate(ppe_inference_preprocess_seconds_bucket{model_service=\"${model_service}\"}[30s]))) * 1000", "legendFormat": "preprocess P95", "refId": "B" },
+        { "expr": "histogram_quantile(0.95, sum by (le) (rate(ppe_inference_model_seconds_bucket{model_service=\"${model_service}\"}[30s]))) * 1000", "legendFormat": "model P95", "refId": "C" },
+        { "expr": "histogram_quantile(0.95, sum by (le) (rate(ppe_inference_postprocess_seconds_bucket{model_service=\"${model_service}\"}[30s]))) * 1000", "legendFormat": "postprocess P95", "refId": "D" },
+        { "expr": "histogram_quantile(0.95, sum by (le) (rate(ppe_inference_queue_seconds_bucket{model_service=\"${model_service}\"}[30s]))) * 1000", "legendFormat": "queue P95", "refId": "E" }
       ],
       "title": "Server stages P95",
       "type": "timeseries"
@@ -129,10 +129,10 @@
       "id": 10,
       "options": { "legend": { "calcs": ["mean", "lastNotNull", "max"], "displayMode": "table", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "multi", "sort": "desc" } },
       "targets": [
-        { "expr": "sum by (name) (rate(container_network_receive_bytes_total{name!=\"\"}[10s]))", "legendFormat": "RX {{name}}", "refId": "A" },
-        { "expr": "sum by (name) (rate(container_network_transmit_bytes_total{name!=\"\"}[10s]))", "legendFormat": "TX {{name}}", "refId": "B" }
+        { "expr": "sum by (name) (rate(container_network_receive_bytes_total{name=~\".*ppe-${model_service}-inference-api-.*\"}[10s]))", "legendFormat": "RX {{name}}", "refId": "A" },
+        { "expr": "sum by (name) (rate(container_network_transmit_bytes_total{name=~\".*ppe-${model_service}-inference-api-.*\"}[10s]))", "legendFormat": "TX {{name}}", "refId": "B" }
       ],
-      "title": "Container network traffic",
+      "title": "Selected API container network traffic",
       "type": "timeseries"
     },
     {
@@ -145,7 +145,7 @@
         { "expr": "100 - avg(rate(node_cpu_seconds_total{mode=\"idle\"}[10s])) * 100", "legendFormat": "host CPU", "refId": "A" },
         { "expr": "(1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) * 100", "legendFormat": "host RAM", "refId": "B" }
       ],
-      "title": "Host utilization",
+      "title": "Host utilization (all services)",
       "type": "timeseries"
     },
     {
@@ -158,7 +158,7 @@
         { "expr": "max by (gpu) (DCGM_FI_DEV_GPU_UTIL)", "legendFormat": "GPU {{gpu}} utilization", "refId": "A" },
         { "expr": "100 * max by (gpu) (DCGM_FI_DEV_FB_USED) / (max by (gpu) (DCGM_FI_DEV_FB_USED) + max by (gpu) (DCGM_FI_DEV_FB_FREE))", "legendFormat": "GPU {{gpu}} VRAM", "refId": "B" }
       ],
-      "title": "GPU and VRAM utilization",
+      "title": "GPU and VRAM utilization (all services)",
       "type": "timeseries"
     },
     {
@@ -171,7 +171,7 @@
         { "expr": "max(DCGM_FI_DEV_GPU_TEMP)", "legendFormat": "temperature", "refId": "A" },
         { "expr": "max(DCGM_FI_DEV_POWER_USAGE)", "legendFormat": "power", "refId": "B" }
       ],
-      "title": "GPU temperature and power",
+      "title": "GPU temperature and power (host-wide)",
       "type": "timeseries"
     },
     {
@@ -180,8 +180,8 @@
       "gridPos": { "h": 8, "w": 8, "x": 0, "y": 28 },
       "id": 14,
       "options": { "legend": { "calcs": ["mean", "lastNotNull", "max"], "displayMode": "table", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "multi", "sort": "desc" } },
-      "targets": [{ "expr": "sum by (name) (rate(container_cpu_usage_seconds_total{name!=\"\"}[10s])) * 100", "legendFormat": "{{name}}", "refId": "A" }],
-      "title": "Container CPU",
+      "targets": [{ "expr": "sum by (name) (rate(container_cpu_usage_seconds_total{name=~\".*ppe-${model_service}-inference-api-.*\"}[10s])) * 100", "legendFormat": "{{name}}", "refId": "A" }],
+      "title": "Selected API container CPU",
       "type": "timeseries"
     },
     {
@@ -190,8 +190,8 @@
       "gridPos": { "h": 8, "w": 8, "x": 8, "y": 28 },
       "id": 15,
       "options": { "legend": { "calcs": ["mean", "lastNotNull", "max"], "displayMode": "table", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "multi", "sort": "desc" } },
-      "targets": [{ "expr": "sum by (name) (container_memory_working_set_bytes{name!=\"\"})", "legendFormat": "{{name}}", "refId": "A" }],
-      "title": "Container memory working set",
+      "targets": [{ "expr": "sum by (name) (container_memory_working_set_bytes{name=~\".*ppe-${model_service}-inference-api-.*\"})", "legendFormat": "{{name}}", "refId": "A" }],
+      "title": "Selected API container RAM (not VRAM)",
       "type": "timeseries"
     },
     {
@@ -201,8 +201,8 @@
       "id": 16,
       "options": { "legend": { "calcs": ["mean", "lastNotNull", "max"], "displayMode": "table", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "multi", "sort": "desc" } },
       "targets": [
-        { "expr": "histogram_quantile(0.50, sum by (le) (rate(ppe_inference_request_bytes_bucket[30s])))", "legendFormat": "payload P50", "refId": "A" },
-        { "expr": "histogram_quantile(0.95, sum by (le) (rate(ppe_inference_request_bytes_bucket[30s])))", "legendFormat": "payload P95", "refId": "B" }
+        { "expr": "histogram_quantile(0.50, sum by (le) (rate(ppe_inference_request_bytes_bucket{model_service=\"${model_service}\"}[30s])))", "legendFormat": "payload P50", "refId": "A" },
+        { "expr": "histogram_quantile(0.95, sum by (le) (rate(ppe_inference_request_bytes_bucket{model_service=\"${model_service}\"}[30s])))", "legendFormat": "payload P95", "refId": "B" }
       ],
       "title": "Encoded request payload",
       "type": "timeseries"
@@ -213,7 +213,7 @@
       "gridPos": { "h": 7, "w": 12, "x": 0, "y": 36 },
       "id": 17,
       "options": { "legend": { "calcs": ["sum", "lastNotNull"], "displayMode": "table", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "multi", "sort": "desc" } },
-      "targets": [{ "expr": "sum by (outcome) (rate(ppe_inference_requests_total[30s]))", "legendFormat": "{{outcome}}", "refId": "A" }],
+      "targets": [{ "expr": "sum by (outcome) (rate(ppe_inference_requests_total{model_service=\"${model_service}\"}[30s]))", "legendFormat": "{{outcome}}", "refId": "A" }],
       "title": "Inference outcomes",
       "type": "timeseries"
     },
@@ -224,21 +224,21 @@
       "id": 18,
       "options": { "legend": { "calcs": ["mean", "lastNotNull", "max"], "displayMode": "table", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "multi", "sort": "desc" } },
       "targets": [
-        { "expr": "ppe_inference_in_flight", "legendFormat": "executing", "refId": "A" },
-        { "expr": "ppe_inference_queue_depth", "legendFormat": "waiting", "refId": "B" },
-        { "expr": "ppe_inference_max_concurrency", "legendFormat": "capacity", "refId": "C" }
+        { "expr": "ppe_inference_in_flight{model_service=\"${model_service}\"}", "legendFormat": "executing", "refId": "A" },
+        { "expr": "ppe_inference_queue_depth{model_service=\"${model_service}\"}", "legendFormat": "waiting", "refId": "B" },
+        { "expr": "ppe_inference_max_concurrency{model_service=\"${model_service}\"}", "legendFormat": "capacity", "refId": "C" }
       ],
       "title": "Inference concurrency and queue",
       "type": "timeseries"
     },
     {
       "datasource": { "type": "prometheus", "uid": "ppe-prometheus" },
-      "fieldConfig": { "defaults": { "displayName": "${__field.labels.job}", "mappings": [{ "options": { "0": { "color": "red", "text": "DOWN" }, "1": { "color": "green", "text": "UP" } }, "type": "value" }], "thresholds": { "mode": "absolute", "steps": [{ "color": "red", "value": null }, { "color": "green", "value": 1 }] } }, "overrides": [] },
+      "fieldConfig": { "defaults": { "mappings": [{ "options": { "0": { "color": "red", "text": "DOWN" }, "1": { "color": "green", "text": "UP" } }, "type": "value" }], "thresholds": { "mode": "absolute", "steps": [{ "color": "red", "value": null }, { "color": "green", "value": 1 }] } }, "overrides": [] },
       "gridPos": { "h": 6, "w": 12, "x": 0, "y": 43 },
       "id": 19,
       "options": { "colorMode": "background", "graphMode": "none", "justifyMode": "auto", "orientation": "horizontal", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "textMode": "value_and_name", "wideLayout": true },
-      "targets": [{ "expr": "max by (job) (up{job=~\"inference-api|node-exporter|cadvisor|dcgm-exporter|prometheus\"})", "instant": true, "legendFormat": "{{job}}", "refId": "A" }],
-      "title": "Monitoring targets",
+      "targets": [{ "expr": "max by (job, model_service) (up{job=~\"inference-api|node-exporter|cadvisor|dcgm-exporter|prometheus\"})", "instant": true, "legendFormat": "{{job}} {{model_service}}", "refId": "A" }],
+      "title": "All monitoring targets",
       "type": "stat"
     },
     {
@@ -247,20 +247,36 @@
       "gridPos": { "h": 6, "w": 12, "x": 12, "y": 43 },
       "id": 20,
       "options": { "colorMode": "value", "graphMode": "none", "justifyMode": "auto", "orientation": "horizontal", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "textMode": "value_and_name", "wideLayout": true },
-      "targets": [{ "expr": "time() - max by (name) (container_last_seen{name!=\"\"})", "instant": true, "legendFormat": "{{name}}", "refId": "A" }],
-      "title": "Container heartbeat age",
+      "targets": [{ "expr": "time() - max by (name) (container_last_seen{name=~\".*ppe-${model_service}-inference-api-.*\"})", "instant": true, "legendFormat": "{{name}}", "refId": "A" }],
+      "title": "Selected API container heartbeat age",
       "type": "stat"
     }
   ],
   "refresh": "2s",
   "schemaVersion": 41,
   "tags": ["ppe", "remote-inference", "gpu"],
-  "templating": { "list": [] },
+  "templating": {
+    "list": [
+      {
+        "name": "model_service",
+        "label": "Inference service",
+        "type": "query",
+        "datasource": { "type": "prometheus", "uid": "ppe-prometheus" },
+        "definition": "label_values(ppe_inference_model_info, model_service)",
+        "query": "label_values(ppe_inference_model_info, model_service)",
+        "refresh": 1,
+        "sort": 1,
+        "multi": false,
+        "includeAll": false,
+        "current": { "selected": true, "text": "yolo26n-640", "value": "yolo26n-640" }
+      }
+    ]
+  },
   "time": { "from": "now-15m", "to": "now" },
   "timepicker": {},
   "timezone": "browser",
-  "title": "PPE Remote Inference — Live Operations",
+  "title": "PPE Remote Inference — Selected Service and Global GPU",
   "uid": "ppe-remote-live",
-  "version": 1,
+  "version": 2,
   "weekStart": ""
 }

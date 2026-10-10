@@ -1,0 +1,12 @@
+# Attach one non-observability inference service to the shared monitoring bridge.
+# The ppe-yolo26n-640 observability stack creates this network first.
+services:
+  inference-api:
+    networks:
+      - ppe-private
+      - ppe-observability
+
+networks:
+  ppe-observability:
+    external: true
+    name: ppe-observability

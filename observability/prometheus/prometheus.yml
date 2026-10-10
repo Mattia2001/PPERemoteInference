@@ -12,7 +12,16 @@ scrape_configs:
   - job_name: inference-api
     metrics_path: /metrics
     static_configs:
-      - targets: ["inference-api:8080"]
+      - targets: ["ppe-yolo26n-640-inference-api-1:8080"]
+        labels: {model_service: "yolo26n-640"}
+      - targets: ["ppe-yolo26n-960-inference-api-1:8080"]
+        labels: {model_service: "yolo26n-960"}
+      - targets: ["ppe-yolo26s-640-inference-api-1:8080"]
+        labels: {model_service: "yolo26s-640"}
+      - targets: ["ppe-yolo26m-640-inference-api-1:8080"]
+        labels: {model_service: "yolo26m-640"}
+      - targets: ["ppe-yolo26l-640-inference-api-1:8080"]
+        labels: {model_service: "yolo26l-640"}
 
   - job_name: node-exporter
     static_configs:

@@ -130,9 +130,40 @@ curl -fsS http://127.0.0.1:3000/api/health
 curl -fsS http://127.0.0.1:8081/metrics | grep '^ppe_'
 ```
 
-The target list should report `inference-api`, `node-exporter`, `cadvisor`,
-`dcgm-exporter` and `prometheus` as `UP`. The RTX 3050 is supported for DCGM
-field watches, although some datacenter-only counters may be absent.
+The observability project now creates a shared Docker bridge named
+`ppe-observability`. Attach the other four running inference projects to it,
+without changing their published API ports or model configuration. For each
+pair below, run the command from the repository root, substituting the project
+and environment-file stem:
+
+| Compose project | Environment-file stem |
+| --- | --- |
+| `ppe-yolo26n-960` | `yolo26n-960` |
+| `ppe-yolo26s-640` | `yolo26s-640` |
+| `ppe-yolo26m-640` | `yolo26m-640` |
+| `ppe-yolo26l-640` | `yolo26l-640` |
+
+```bash
+docker compose -p ppe-yolo26s-640 \
+  --env-file deploy/compose/yolo26s-640.env \
+  -f deploy/compose/compose.yaml \
+  -f deploy/compose/compose.gpu.yaml \
+  -f deploy/compose/compose.monitoring-client.yaml \
+  up -d --no-deps inference-api
+```
+
+Run this only after the YOLO26n-640 observability project is up. Include the
+monitoring-client overlay in subsequent updates of each model project;
+otherwise Compose may disconnect its API from the shared bridge. All APIs
+remain on their private Compose networks too. The shared bridge exposes
+container-internal `/metrics` to Prometheus, not another host port.
+
+Prometheus now has five `inference-api` targets, each with a stable
+`model_service` label, plus node-exporter, cAdvisor, DCGM and Prometheus.
+Verify that **all nine targets** are `UP` after the API containers are healthy.
+During rollout, unattached model targets will temporarily show `DOWN`.
+The RTX 3050 supports DCGM field watches, although some datacenter-only
+counters may be absent.
 
 From Windows, while the VPN is active, open an SSH tunnel and leave it running:
 
@@ -146,8 +177,16 @@ Then open:
 - Prometheus targets: `http://127.0.0.1:9090/targets`.
 
 Grafana provisions the Prometheus datasource and the **PPE Remote Inference —
-Live Operations** dashboard automatically. Select a short range such as “Last
-15 minutes” during an offload experiment.
+Selected Service and Global GPU** dashboard automatically. Choose the
+`Inference service` dropdown to match the model/port selected on the phone,
+then use a short range such as “Last 15 minutes”. API latency, queue, requests
+and API-container CPU/RAM/network are filtered to that service. Target health
+shows all services. Host CPU/network and DCGM GPU utilization, VRAM,
+temperature and power are **global to the server**, not attributable to the
+selected model. The cAdvisor memory panel is container RAM, not GPU VRAM.
+Five idle CUDA processes can occupy VRAM even while GPU utilization is zero;
+for clean model-specific latency measurements, ensure no other client sends
+work to the other resident APIs and record co-residency in the test metadata.
 
 If one exporter fails, inspect only its logs without stopping inference:
 

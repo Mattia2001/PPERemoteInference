@@ -7,7 +7,7 @@ groups:
         labels:
           severity: critical
         annotations:
-          summary: PPE remote inference API is unavailable
+          summary: "PPE remote inference API {{ $labels.model_service }} is unavailable"
 
       - alert: PPEInferenceExporterDown
         expr: up{job=~"node-exporter|cadvisor|dcgm-exporter"} == 0
@@ -23,15 +23,15 @@ groups:
         labels:
           severity: warning
         annotations:
-          summary: Remote inference requests are waiting for an execution slot
+          summary: "Remote inference requests are waiting on {{ $labels.model_service }}"
 
       - alert: PPEInferenceHighServerLatency
-        expr: histogram_quantile(0.95, sum by (le) (rate(ppe_inference_server_seconds_bucket[2m]))) > 0.2
+        expr: histogram_quantile(0.95, sum by (model_service, le) (rate(ppe_inference_server_seconds_bucket[2m]))) > 0.2
         for: 2m
         labels:
           severity: warning
         annotations:
-          summary: P95 server residency exceeds 200 ms
+          summary: "P95 server residency exceeds 200 ms on {{ $labels.model_service }}"
 
       - alert: PPEInferenceGpuHot
         expr: DCGM_FI_DEV_GPU_TEMP > 85

@@ -2,6 +2,9 @@ services:
   inference-api:
     labels:
       ppe.component: inference-api
+    networks:
+      - ppe-private
+      - ppe-observability
 
   prometheus:
     image: prom/prometheus:v3.14.0
@@ -25,6 +28,7 @@ services:
       - dcgm-exporter
     networks:
       - ppe-private
+      - ppe-observability
 
   grafana:
     image: grafana/grafana:13.1.0
@@ -96,3 +100,8 @@ services:
 volumes:
   prometheus-data:
   grafana-data:
+
+networks:
+  ppe-observability:
+    name: ppe-observability
+    driver: bridge
