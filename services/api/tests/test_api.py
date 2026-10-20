@@ -8,6 +8,7 @@ from fastapi.testclient import TestClient
 from PIL import Image
 
 from app.main import app, _checkpoint_sha256
+from app.backend import Prediction, RawDetection
 
 
 def test_checkpoint_hash_is_derived_from_file_bytes(tmp_path) -> None:
@@ -64,7 +65,33 @@ def test_inference_echoes_identity_and_image_shape() -> None:
     assert body["sequenceNumber"] == 1
     assert body["image"] == {"width": 64, "height": 48}
     assert body["detections"] == []
+    assert body["allDetections"] == []
     assert body["timing"]["totalServerMs"] >= 0
+
+
+def test_all_detections_preserve_unselected_and_unmatched_ppe() -> None:
+    class FixedBackend:
+        ready = True
+
+        def predict(self, image):
+            return Prediction(detections=[
+                RawDetection(0, "person", 0.9, (0.0, 0.0, 20.0, 20.0)),
+                RawDetection(1, "helmet", 0.8, (2.0, 2.0, 8.0, 8.0)),
+                RawDetection(3, "gloves", 0.7, (40.0, 30.0, 46.0, 36.0)),
+            ])
+
+    with TestClient(app) as client:
+        app.state.backend = FixedBackend()
+        response = client.post(
+            "/v1/inference",
+            files={"frame": ("frame.jpg", jpeg_bytes(), "image/jpeg")},
+            data={"metadata": metadata(selectedClasses=["person", "helmet"])},
+        )
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert [item["className"] for item in body["detections"]] == ["person", "helmet"]
+    assert [item["className"] for item in body["allDetections"]] == ["person", "helmet", "gloves"]
+    assert body["allDetections"][2]["associatedPersonId"] is None
 
 
 def test_model_mismatch_is_stable_error() -> None:

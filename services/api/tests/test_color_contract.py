@@ -37,7 +37,8 @@ class ColorContractTest(unittest.TestCase):
 
         backend = object.__new__(UltralyticsBackend)
         backend.model = FakeModel()
-        backend.settings = SimpleNamespace(input_size=640, confidence=.25, iou=.45, device="cpu")
+        backend.settings = SimpleNamespace(input_size=640, confidence=.25, iou=.45,
+                                           max_detections=300, device="cpu")
         backend.predict(rgb)
         bgr = backend.model.source
         self.assertTrue(bgr.flags.c_contiguous)

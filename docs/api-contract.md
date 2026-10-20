@@ -87,6 +87,13 @@ Successful response (abridged):
       "associatedPersonId": "det_person_0"
     }
   ],
+  "allDetections": ["the same detection objects before selectedClasses filtering"],
+  "postprocess": {
+    "confidenceThreshold": 0.25,
+    "iouThreshold": 0.45,
+    "maxDetections": 300,
+    "outputLimitReached": false
+  },
   "timing": {
     "queueMs": 0.8,
     "decodeMs": 2.1,
@@ -98,7 +105,13 @@ Successful response (abridged):
 }
 ```
 
-`selectedClasses` is an output filter, not a request for a different model. An empty or omitted list means all canonical classes.
+`selectedClasses` filters only `detections`, not `allDetections`; it is not a
+request for a different model. An empty or omitted list means all canonical
+classes. `allDetections` and `postprocess` are additive v1 fields for the mobile
+schema-10 quality-state export. They are required for a *complete* quality
+observation, so a phone talking to an older server must explicitly mark that
+observation unavailable. A response at `maxDetections` is marked capped; the
+server cannot report the pre-cap count from the Ultralytics predictor.
 
 ## Errors
 

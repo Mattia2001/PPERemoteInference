@@ -25,6 +25,7 @@ class Prediction:
     preprocess_ms: float = 0.0
     inference_ms: float = 0.0
     postprocess_ms: float = 0.0
+    output_limit_reached: bool = False
 
 
 class Backend(Protocol):
@@ -79,6 +80,7 @@ class UltralyticsBackend:
             imgsz=self.settings.input_size,
             conf=self.settings.confidence,
             iou=self.settings.iou,
+            max_det=self.settings.max_detections,
             device=self.settings.device,
             # Match the mobile square letterbox instead of the PyTorch
             # predictor's default minimum-rectangle padding.
@@ -112,6 +114,7 @@ class UltralyticsBackend:
             preprocess_ms=float(speed.get("preprocess", 0.0)),
             inference_ms=float(speed.get("inference", 0.0)),
             postprocess_ms=float(speed.get("postprocess", 0.0)),
+            output_limit_reached=len(detections) >= self.settings.max_detections,
         )
 
 

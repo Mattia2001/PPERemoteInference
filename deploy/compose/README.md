@@ -131,7 +131,7 @@ curl -fsS http://127.0.0.1:8081/metrics | grep '^ppe_'
 ```
 
 The observability project now creates a shared Docker bridge named
-`ppe-observability`. Attach the other four running inference projects to it,
+`ppe-observability`. Attach the other five running inference projects to it,
 without changing their published API ports or model configuration. For each
 pair below, run the command from the repository root, substituting the project
 and environment-file stem:
@@ -142,6 +142,7 @@ and environment-file stem:
 | `ppe-yolo26s-640` | `yolo26s-640` |
 | `ppe-yolo26m-640` | `yolo26m-640` |
 | `ppe-yolo26l-640` | `yolo26l-640` |
+| `ppe-yolo26x-640` | `yolo26x-640` |
 
 ```bash
 docker compose -p ppe-yolo26s-640 \
@@ -158,9 +159,9 @@ otherwise Compose may disconnect its API from the shared bridge. All APIs
 remain on their private Compose networks too. The shared bridge exposes
 container-internal `/metrics` to Prometheus, not another host port.
 
-Prometheus now has five `inference-api` targets, each with a stable
+Prometheus now has six `inference-api` targets, each with a stable
 `model_service` label, plus node-exporter, cAdvisor, DCGM and Prometheus.
-Verify that **all nine targets** are `UP` after the API containers are healthy.
+Verify that **all ten targets** are `UP` after the API containers are healthy.
 During rollout, unattached model targets will temporarily show `DOWN`.
 The RTX 3050 supports DCGM field watches, although some datacenter-only
 counters may be absent.

@@ -22,6 +22,8 @@ scrape_configs:
         labels: {model_service: "yolo26m-640"}
       - targets: ["ppe-yolo26l-640-inference-api-1:8080"]
         labels: {model_service: "yolo26l-640"}
+      - targets: ["ppe-yolo26x-640-inference-api-1:8080"]
+        labels: {model_service: "yolo26x-640"}
 
   - job_name: node-exporter
     static_configs:

@@ -24,6 +24,7 @@ class Settings:
     input_size: int = _int("PPE_INPUT_SIZE", 960)
     confidence: float = _float("PPE_CONFIDENCE", 0.25)
     iou: float = _float("PPE_IOU", 0.45)
+    max_detections: int = _int("PPE_MAX_DETECTIONS", 300)
     max_payload_bytes: int = _int("PPE_MAX_PAYLOAD_BYTES", 8 * 1024 * 1024)
     max_concurrency: int = _int("PPE_MAX_CONCURRENCY", 1)
     queue_timeout_ms: float = _float("PPE_QUEUE_TIMEOUT_MS", 100.0)
@@ -38,6 +39,7 @@ class Settings:
         if (
             self.input_size <= 0
             or self.max_payload_bytes <= 0
+            or self.max_detections <= 0
             or self.max_concurrency <= 0
             or self.queue_timeout_ms <= 0
             or self.warmup_frame_width <= 0

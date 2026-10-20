@@ -28,6 +28,7 @@ from .schemas import (
     InferenceMetadata,
     InferenceResponse,
     ModelInfo,
+    PostprocessInfo,
     Timing,
 )
 
@@ -319,7 +320,11 @@ async def inference(
         IN_FLIGHT.dec()
         request.app.state.semaphore.release()
 
-    detections = _serialize_detections(prediction, width, height, set(parsed.selected_classes))
+    all_detections = _serialize_detections(prediction, width, height, set())
+    detections = (
+        [item for item in all_detections if item.class_name in parsed.selected_classes]
+        if parsed.selected_classes else all_detections
+    )
     PREPROCESS.observe(prediction.preprocess_ms / 1000.0)
     MODEL_LATENCY.observe(prediction.inference_ms / 1000.0)
     POSTPROCESS.observe(prediction.postprocess_ms / 1000.0)
@@ -336,6 +341,13 @@ async def inference(
         model=_model_info(request),
         image=ImageInfo(width=width, height=height),
         detections=detections,
+        allDetections=all_detections,
+        postprocess=PostprocessInfo(
+            confidenceThreshold=settings.confidence,
+            iouThreshold=settings.iou,
+            maxDetections=settings.max_detections,
+            outputLimitReached=prediction.output_limit_reached,
+        ),
         timing=Timing(
             queueMs=queue_ms,
             decodeMs=decode_ms,

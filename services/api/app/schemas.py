@@ -67,6 +67,13 @@ class Timing(ApiModel):
     total_server_ms: float = Field(alias="totalServerMs")
 
 
+class PostprocessInfo(ApiModel):
+    confidence_threshold: float = Field(alias="confidenceThreshold")
+    iou_threshold: float = Field(alias="iouThreshold")
+    max_detections: int = Field(alias="maxDetections")
+    output_limit_reached: bool = Field(alias="outputLimitReached")
+
+
 class InferenceResponse(ApiModel):
     api_version: str = Field(alias="apiVersion")
     frame_id: str = Field(alias="frameId")
@@ -77,6 +84,8 @@ class InferenceResponse(ApiModel):
     model: ModelInfo
     image: ImageInfo
     detections: list[Detection]
+    all_detections: list[Detection] = Field(alias="allDetections")
+    postprocess: PostprocessInfo
     timing: Timing
 
 
